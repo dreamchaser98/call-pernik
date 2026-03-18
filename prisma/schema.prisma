@@ -1,0 +1,126 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String?  @unique
+  phone     String?
+  name      String
+  password  String?
+  role      String   @default("citizen") // citizen, admin, operator
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  signals Signal[]
+}
+
+model Category {
+  id       String @id @default(uuid())
+  name     String
+  slug     String @unique
+  icon     String @default("📋")
+  orderNum Int    @default(0)
+
+  types   SignalType[]
+  signals Signal[]
+}
+
+model SignalType {
+  id         String @id @default(uuid())
+  name       String
+  slug       String @unique
+  categoryId String
+  orderNum   Int    @default(0)
+
+  category Category @relation(fields: [categoryId], references: [id])
+  signals  Signal[]
+}
+
+model Signal {
+  id          String  @id @default(uuid())
+  code        String  @unique // Human-readable code like PK-2024-00001
+  categoryId  String
+  typeId      String?
+  userId      String?
+  status      String  @default("new") // new, in_progress, resolved, rejected
+  priority    String  @default("normal") // low, normal, high, urgent
+
+  // Location
+  latitude    Float?
+  longitude   Float?
+  address     String?
+  district    String?
+  settlement  String?
+  street      String?
+  streetNum   String?
+  block       String?
+  entrance    String?
+  floor       String?
+  apartment   String?
+
+  // Content
+  shortDesc   String
+  fullDesc    String?
+
+  // Submitter info (if not logged in)
+  senderName  String
+  senderEmail String?
+  senderPhone String?
+
+  // Consent
+  gdprConsent Boolean @default(false)
+
+  // Metadata
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  resolvedAt  DateTime?
+
+  category    Category    @relation(fields: [categoryId], references: [id])
+  type        SignalType? @relation(fields: [typeId], references: [id])
+  user        User?       @relation(fields: [userId], references: [id])
+  attachments Attachment[]
+  comments    Comment[]
+  statusLog   StatusLog[]
+}
+
+model Attachment {
+  id        String   @id @default(uuid())
+  signalId  String
+  filename  String
+  origName  String
+  mimeType  String
+  size      Int
+  path      String
+  createdAt DateTime @default(now())
+
+  signal Signal @relation(fields: [signalId], references: [id], onDelete: Cascade)
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  signalId  String
+  author    String
+  content   String
+  isPublic  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  signal Signal @relation(fields: [signalId], references: [id], onDelete: Cascade)
+}
+
+model StatusLog {
+  id        String   @id @default(uuid())
+  signalId  String
+  oldStatus String
+  newStatus String
+  note      String?
+  changedBy String
+  createdAt DateTime @default(now())
+
+  signal Signal @relation(fields: [signalId], references: [id], onDelete: Cascade)
+}
