@@ -1,4 +1,3 @@
-import { prisma } from '@/lib/prisma';
 import Link from 'next/link';
 
 const STATUS_LABELS: Record<string, { label: string; class: string }> = {
@@ -8,29 +7,77 @@ const STATUS_LABELS: Record<string, { label: string; class: string }> = {
   rejected: { label: 'Отхвърлен', class: 'bg-red-100 text-red-800' },
 };
 
-export const dynamic = 'force-dynamic';
+// Mock data for visual preview
+const mockCategories = [
+  { id: 1, name: 'Инфраструктура', icon: '🏗️', orderNum: 1, _count: { signals: 12 } },
+  { id: 2, name: 'Улично осветление', icon: '💡', orderNum: 2, _count: { signals: 8 } },
+  { id: 3, name: 'Чистота', icon: '🧹', orderNum: 3, _count: { signals: 15 } },
+  { id: 4, name: 'Зелени площи', icon: '🌳', orderNum: 4, _count: { signals: 6 } },
+  { id: 5, name: 'Пътища', icon: '🛣️', orderNum: 5, _count: { signals: 20 } },
+  { id: 6, name: 'Други', icon: '📋', orderNum: 6, _count: { signals: 4 } },
+];
 
-export default async function HomePage() {
-  const [signals, categories, stats] = await Promise.all([
-    prisma.signal.findMany({
-      include: { category: true, type: true },
-      orderBy: { createdAt: 'desc' },
-      take: 20,
-    }),
-    prisma.category.findMany({
-      include: { _count: { select: { signals: true } } },
-      orderBy: { orderNum: 'asc' },
-    }),
-    prisma.signal.groupBy({
-      by: ['status'],
-      _count: true,
-    }),
-  ]);
+const mockSignals = [
+  {
+    id: 1,
+    code: 'SIG-2024-001',
+    shortDesc: 'Повредена улична лампа на ул. Кракра',
+    status: 'new',
+    address: 'ул. Кракра 15',
+    createdAt: new Date('2024-03-15T10:30:00'),
+    category: { id: 2, name: 'Улично осветление', icon: '💡' },
+    type: { name: 'Неработеща лампа' },
+  },
+  {
+    id: 2,
+    code: 'SIG-2024-002',
+    shortDesc: 'Дупка на пътя при кръстовището',
+    status: 'in_progress',
+    address: 'бул. България, кръстовище с ул. Юрий Гагарин',
+    createdAt: new Date('2024-03-14T14:20:00'),
+    category: { id: 5, name: 'Пътища', icon: '🛣️' },
+    type: { name: 'Дупка' },
+  },
+  {
+    id: 3,
+    code: 'SIG-2024-003',
+    shortDesc: 'Непочистен контейнер за смет',
+    status: 'resolved',
+    address: 'ж.к. Изток, бл. 42',
+    createdAt: new Date('2024-03-13T09:15:00'),
+    category: { id: 3, name: 'Чистота', icon: '🧹' },
+    type: { name: 'Сметосъбиране' },
+  },
+  {
+    id: 4,
+    code: 'SIG-2024-004',
+    shortDesc: 'Счупена пейка в парка',
+    status: 'new',
+    address: 'Парк "Гоце Делчев"',
+    createdAt: new Date('2024-03-12T16:45:00'),
+    category: { id: 4, name: 'Зелени площи', icon: '🌳' },
+    type: { name: 'Повреда на съоръжение' },
+  },
+  {
+    id: 5,
+    code: 'SIG-2024-005',
+    shortDesc: 'Пропаднал тротоар пред магазина',
+    status: 'in_progress',
+    address: 'ул. Търговска 8',
+    createdAt: new Date('2024-03-11T11:00:00'),
+    category: { id: 1, name: 'Инфраструктура', icon: '🏗️' },
+    type: { name: 'Тротоар' },
+  },
+];
 
-  const totalSignals = stats.reduce((sum, s) => sum + s._count, 0);
-  const resolvedCount = stats.find((s) => s.status === 'resolved')?._count || 0;
-  const activeCount = stats.find((s) => s.status === 'in_progress')?._count || 0;
-  const newCount = stats.find((s) => s.status === 'new')?._count || 0;
+export default function HomePage() {
+  const signals = mockSignals;
+  const categories = mockCategories;
+
+  const totalSignals = 65;
+  const newCount = 18;
+  const activeCount = 12;
+  const resolvedCount = 35;
 
   return (
     <div>
@@ -106,64 +153,50 @@ export default async function HomePage() {
           <h2 className="text-2xl font-bold text-slate-800">Последни сигнали</h2>
         </div>
 
-        {signals.length === 0 ? (
-          <div className="bg-white rounded-xl shadow-sm p-12 text-center">
-            <span className="text-5xl block mb-4">📭</span>
-            <h3 className="text-xl font-bold text-slate-700 mb-2">Все още няма сигнали</h3>
-            <p className="text-slate-500 mb-6">Бъдете първият, който подаде сигнал за проблем в Перник.</p>
-            <Link
-              href="/signal/create"
-              className="inline-flex items-center gap-2 bg-[#2d4a7a] hover:bg-[#1a2744] text-white font-medium px-6 py-3 rounded-lg transition-colors"
-            >
-              Подайте сигнал
-            </Link>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {signals.map((signal) => {
-              const status = STATUS_LABELS[signal.status] || STATUS_LABELS.new;
-              return (
-                <div
-                  key={signal.id}
-                  className="bg-white rounded-xl shadow-sm p-4 sm:p-5 border border-slate-100 hover:border-slate-200 transition-colors"
-                >
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <span className="text-2xl flex-shrink-0">{signal.category.icon}</span>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-xs font-mono text-slate-400">
-                            {signal.code}
-                          </span>
-                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${status.class}`}>
-                            {status.label}
-                          </span>
-                        </div>
-                        <h3 className="font-medium text-slate-800 mt-1 truncate">
-                          {signal.shortDesc}
-                        </h3>
-                        <p className="text-xs text-slate-400 mt-1">
-                          {signal.category.name}
-                          {signal.type ? ` → ${signal.type.name}` : ''}
-                          {signal.address ? ` • ${signal.address}` : ''}
-                        </p>
+        <div className="space-y-3">
+          {signals.map((signal) => {
+            const status = STATUS_LABELS[signal.status] || STATUS_LABELS.new;
+            return (
+              <div
+                key={signal.id}
+                className="bg-white rounded-xl shadow-sm p-4 sm:p-5 border border-slate-100 hover:border-slate-200 transition-colors"
+              >
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <span className="text-2xl flex-shrink-0">{signal.category.icon}</span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-xs font-mono text-slate-400">
+                          {signal.code}
+                        </span>
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${status.class}`}>
+                          {status.label}
+                        </span>
                       </div>
-                    </div>
-                    <div className="text-xs text-slate-400 flex-shrink-0">
-                      {new Date(signal.createdAt).toLocaleDateString('bg-BG', {
-                        day: 'numeric',
-                        month: 'short',
-                        year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
+                      <h3 className="font-medium text-slate-800 mt-1 truncate">
+                        {signal.shortDesc}
+                      </h3>
+                      <p className="text-xs text-slate-400 mt-1">
+                        {signal.category.name}
+                        {signal.type ? ` → ${signal.type.name}` : ''}
+                        {signal.address ? ` • ${signal.address}` : ''}
+                      </p>
                     </div>
                   </div>
+                  <div className="text-xs text-slate-400 flex-shrink-0">
+                    {new Date(signal.createdAt).toLocaleDateString('bg-BG', {
+                      day: 'numeric',
+                      month: 'short',
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </div>
                 </div>
-              );
-            })}
-          </div>
-        )}
+              </div>
+            );
+          })}
+        </div>
       </section>
     </div>
   );
