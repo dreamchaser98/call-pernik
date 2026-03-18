@@ -1,20 +1,21 @@
+'use client';
+
 import Link from 'next/link';
 
-const STATUS_LABELS: Record<string, { label: string; class: string }> = {
-  new: { label: 'Нов', class: 'bg-blue-100 text-blue-800' },
-  in_progress: { label: 'В обработка', class: 'bg-yellow-100 text-yellow-800' },
-  resolved: { label: 'Приключен', class: 'bg-green-100 text-green-800' },
-  rejected: { label: 'Отхвърлен', class: 'bg-red-100 text-red-800' },
+const STATUS_LABELS: Record<string, { label: string; className: string }> = {
+  new: { label: 'Нов', className: 'bg-blue-100 text-blue-800' },
+  in_progress: { label: 'В обработка', className: 'bg-yellow-100 text-yellow-800' },
+  resolved: { label: 'Приключен', className: 'bg-green-100 text-green-800' },
+  rejected: { label: 'Отхвърлен', className: 'bg-red-100 text-red-800' },
 };
 
-// Mock data for visual preview
 const mockCategories = [
-  { id: 1, name: 'Инфраструктура', icon: '🏗️', orderNum: 1, _count: { signals: 12 } },
-  { id: 2, name: 'Улично осветление', icon: '💡', orderNum: 2, _count: { signals: 8 } },
-  { id: 3, name: 'Чистота', icon: '🧹', orderNum: 3, _count: { signals: 15 } },
-  { id: 4, name: 'Зелени площи', icon: '🌳', orderNum: 4, _count: { signals: 6 } },
-  { id: 5, name: 'Пътища', icon: '🛣️', orderNum: 5, _count: { signals: 20 } },
-  { id: 6, name: 'Други', icon: '📋', orderNum: 6, _count: { signals: 4 } },
+  { id: 1, name: 'Инфраструктура', icon: '🏗️', orderNum: 1, signalCount: 12 },
+  { id: 2, name: 'Улично осветление', icon: '💡', orderNum: 2, signalCount: 8 },
+  { id: 3, name: 'Чистота', icon: '🧹', orderNum: 3, signalCount: 15 },
+  { id: 4, name: 'Зелени площи', icon: '🌳', orderNum: 4, signalCount: 6 },
+  { id: 5, name: 'Пътища', icon: '🛣️', orderNum: 5, signalCount: 20 },
+  { id: 6, name: 'Други', icon: '📋', orderNum: 6, signalCount: 4 },
 ];
 
 const mockSignals = [
@@ -24,9 +25,10 @@ const mockSignals = [
     shortDesc: 'Повредена улична лампа на ул. Кракра',
     status: 'new',
     address: 'ул. Кракра 15',
-    createdAt: new Date('2024-03-15T10:30:00'),
-    category: { id: 2, name: 'Улично осветление', icon: '💡' },
-    type: { name: 'Неработеща лампа' },
+    createdAt: '2024-03-15T10:30:00',
+    categoryName: 'Улично осветление',
+    categoryIcon: '💡',
+    typeName: 'Неработеща лампа',
   },
   {
     id: 2,
@@ -34,9 +36,10 @@ const mockSignals = [
     shortDesc: 'Дупка на пътя при кръстовището',
     status: 'in_progress',
     address: 'бул. България, кръстовище с ул. Юрий Гагарин',
-    createdAt: new Date('2024-03-14T14:20:00'),
-    category: { id: 5, name: 'Пътища', icon: '🛣️' },
-    type: { name: 'Дупка' },
+    createdAt: '2024-03-14T14:20:00',
+    categoryName: 'Пътища',
+    categoryIcon: '🛣️',
+    typeName: 'Дупка',
   },
   {
     id: 3,
@@ -44,9 +47,10 @@ const mockSignals = [
     shortDesc: 'Непочистен контейнер за смет',
     status: 'resolved',
     address: 'ж.к. Изток, бл. 42',
-    createdAt: new Date('2024-03-13T09:15:00'),
-    category: { id: 3, name: 'Чистота', icon: '🧹' },
-    type: { name: 'Сметосъбиране' },
+    createdAt: '2024-03-13T09:15:00',
+    categoryName: 'Чистота',
+    categoryIcon: '🧹',
+    typeName: 'Сметосъбиране',
   },
   {
     id: 4,
@@ -54,9 +58,10 @@ const mockSignals = [
     shortDesc: 'Счупена пейка в парка',
     status: 'new',
     address: 'Парк "Гоце Делчев"',
-    createdAt: new Date('2024-03-12T16:45:00'),
-    category: { id: 4, name: 'Зелени площи', icon: '🌳' },
-    type: { name: 'Повреда на съоръжение' },
+    createdAt: '2024-03-12T16:45:00',
+    categoryName: 'Зелени площи',
+    categoryIcon: '🌳',
+    typeName: 'Повреда на съоръжение',
   },
   {
     id: 5,
@@ -64,16 +69,14 @@ const mockSignals = [
     shortDesc: 'Пропаднал тротоар пред магазина',
     status: 'in_progress',
     address: 'ул. Търговска 8',
-    createdAt: new Date('2024-03-11T11:00:00'),
-    category: { id: 1, name: 'Инфраструктура', icon: '🏗️' },
-    type: { name: 'Тротоар' },
+    createdAt: '2024-03-11T11:00:00',
+    categoryName: 'Инфраструктура',
+    categoryIcon: '🏗️',
+    typeName: 'Тротоар',
   },
 ];
 
 export default function HomePage() {
-  const signals = mockSignals;
-  const categories = mockCategories;
-
   const totalSignals = 65;
   const newCount = 18;
   const activeCount = 12;
@@ -81,7 +84,6 @@ export default function HomePage() {
 
   return (
     <div>
-      {/* Hero Section */}
       <section className="bg-gradient-to-br from-[#1a2744] via-[#2d4a7a] to-[#4a7ab5] text-white py-16 sm:py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-3xl sm:text-5xl font-bold mb-4">
@@ -103,18 +105,17 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Stats */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {[
-            { label: 'Общо сигнали', value: totalSignals, icon: '📊', color: 'bg-white' },
-            { label: 'Нови', value: newCount, icon: '🆕', color: 'bg-white' },
-            { label: 'В обработка', value: activeCount, icon: '⚙️', color: 'bg-white' },
-            { label: 'Приключени', value: resolvedCount, icon: '✅', color: 'bg-white' },
+            { label: 'Общо сигнали', value: totalSignals, icon: '📊' },
+            { label: 'Нови', value: newCount, icon: '🆕' },
+            { label: 'В обработка', value: activeCount, icon: '⚙️' },
+            { label: 'Приключени', value: resolvedCount, icon: '✅' },
           ].map((stat) => (
             <div
               key={stat.label}
-              className={`${stat.color} rounded-xl shadow-lg p-4 sm:p-6 text-center`}
+              className="bg-white rounded-xl shadow-lg p-4 sm:p-6 text-center"
             >
               <span className="text-2xl">{stat.icon}</span>
               <div className="text-2xl sm:text-3xl font-bold text-[#1a2744] mt-1">
@@ -126,11 +127,10 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Quick Category Links */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <h2 className="text-2xl font-bold text-slate-800 mb-6">Категории сигнали</h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-          {categories.map((cat) => (
+          {mockCategories.map((cat) => (
             <div
               key={cat.id}
               className="bg-white rounded-xl p-4 text-center shadow-sm hover:shadow-md transition-shadow border border-slate-100"
@@ -140,21 +140,20 @@ export default function HomePage() {
                 {cat.name}
               </p>
               <span className="text-xs text-slate-400 mt-1 block">
-                {cat._count.signals} сигнала
+                {cat.signalCount} сигнала
               </span>
             </div>
           ))}
         </div>
       </section>
 
-      {/* Recent Signals */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-slate-800">Последни сигнали</h2>
         </div>
 
         <div className="space-y-3">
-          {signals.map((signal) => {
+          {mockSignals.map((signal) => {
             const status = STATUS_LABELS[signal.status] || STATUS_LABELS.new;
             return (
               <div
@@ -163,13 +162,13 @@ export default function HomePage() {
               >
                 <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                   <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <span className="text-2xl flex-shrink-0">{signal.category.icon}</span>
+                    <span className="text-2xl flex-shrink-0">{signal.categoryIcon}</span>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-xs font-mono text-slate-400">
                           {signal.code}
                         </span>
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${status.class}`}>
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${status.className}`}>
                           {status.label}
                         </span>
                       </div>
@@ -177,8 +176,8 @@ export default function HomePage() {
                         {signal.shortDesc}
                       </h3>
                       <p className="text-xs text-slate-400 mt-1">
-                        {signal.category.name}
-                        {signal.type ? ` → ${signal.type.name}` : ''}
+                        {signal.categoryName}
+                        {signal.typeName ? ` → ${signal.typeName}` : ''}
                         {signal.address ? ` • ${signal.address}` : ''}
                       </p>
                     </div>
